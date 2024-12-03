@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="pLwMzlBUauqvQRGpsqM3" name="Page-1">
-        <mxGraphModel dx="5217" dy="6264" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="2053" dy="3709" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -363,7 +363,7 @@
                         <mxPoint x="2567" y="-18" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="388" value="&lt;h1&gt;CRI&lt;/h1&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Das Kubernetes Container Runtime Interface (CRI) definiert das wichtigste gRPC-Protokoll für die Kommunikation zwischen den Knotenkomponenten Kubelet und Container Runtime.&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;pre&gt;Quelle:&amp;nbsp;https://kubernetes.io/docs/concepts/architecture/cri/&lt;/pre&gt;" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;labelBackgroundColor=none;strokeWidth=1;fontSize=9;shadow=0;" vertex="1" parent="432">
+                <mxCell id="388" value="&lt;h1&gt;CRI&lt;/h1&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;Das Kubernetes Container Runtime Interface (CRI) definiert das wichtigste gRPC-Protokoll für die Kommunikation zwischen den Knotenkomponenten Kubelet und Container Runtime.&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;pre&gt;Quelle:&amp;nbsp;https://kubernetes.io/docs/concepts/architecture/cri/&lt;/pre&gt;" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;labelBackgroundColor=none;strokeWidth=1;fontSize=9;shadow=0;" vertex="1" parent="432">
                     <mxGeometry x="209" y="475" width="382" height="115" as="geometry"/>
                 </mxCell>
                 <mxCell id="435" value="&lt;h1&gt;&lt;font size=&quot;1&quot; style=&quot;&quot;&gt;&lt;b style=&quot;font-size: 48px;&quot;&gt;WORKER NODE 1&lt;/b&gt;&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;dashPattern=12 12;" vertex="1" parent="436">
