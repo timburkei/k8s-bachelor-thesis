@@ -1,0 +1,91 @@
+<mxfile host="65bd71144e">
+    <diagram id="AvMkAQmsT2SCqfRyGlOO" name="Page-1">
+        <mxGraphModel dx="2439" dy="664" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="340" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Frontend Agent" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#FFFFFF;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.call_center_agent;" vertex="1" parent="1">
+                    <mxGeometry x="230" y="342.5" width="46" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="K8 Loadbalcner" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.classic_load_balancer;fillColor=#F58534;gradientColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="414" y="334" width="69" height="72" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="" style="endArrow=classic;startArrow=classic;html=1;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="330" y="270" as="sourcePoint"/>
+                        <mxPoint x="1250" y="390" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="18" value="" style="endArrow=classic;startArrow=classic;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="3" target="4">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="1200" y="440" as="sourcePoint"/>
+                        <mxPoint x="1250" y="390" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="21" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="4">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="493" y="347.9061280004031" as="sourcePoint"/>
+                        <mxPoint x="610" y="370" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="25" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=0.855;exitY=0.855;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.02;entryY=0.029;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="4" target="13">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="1200" y="440" as="sourcePoint"/>
+                        <mxPoint x="1250" y="390" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=0.855;exitY=0.145;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.007;entryY=0.964;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="4" target="6">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="1200" y="440" as="sourcePoint"/>
+                        <mxPoint x="1250" y="390" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="24" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="610" y="203" width="86" height="334" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="group" vertex="1" connectable="0" parent="24">
+                    <mxGeometry width="86" height="74" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Komprimierungs Agent" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/general/Image.svg;" vertex="1" parent="8">
+                    <mxGeometry y="30" width="64" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#FFFFFF;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.call_center_agent;" vertex="1" parent="8">
+                    <mxGeometry x="40" width="46" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="group" vertex="1" connectable="0" parent="24">
+                    <mxGeometry y="130" width="86" height="74" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Komprimierungs Agent" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/general/Image.svg;" vertex="1" parent="9">
+                    <mxGeometry y="30" width="64" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#FFFFFF;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.call_center_agent;" vertex="1" parent="9">
+                    <mxGeometry x="40" width="46" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="" style="group" vertex="1" connectable="0" parent="24">
+                    <mxGeometry y="260" width="86" height="74" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Komprimierungs Agent" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/general/Image.svg;" vertex="1" parent="12">
+                    <mxGeometry y="30" width="64" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#FFFFFF;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.call_center_agent;" vertex="1" parent="12">
+                    <mxGeometry x="40" width="46" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="" style="endArrow=classic;startArrow=classic;html=1;dashed=1;dashPattern=12 12;entryX=0.493;entryY=1.016;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="24" source="10" target="6">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-170" y="257" as="sourcePoint"/>
+                        <mxPoint x="-120" y="207" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="39" value="" style="endArrow=classic;startArrow=classic;html=1;dashed=1;dashPattern=12 12;entryX=0.493;entryY=1.016;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="24">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="30.358141962422224" y="289.3" as="sourcePoint"/>
+                        <mxPoint x="30.00200000000018" y="204.00399999999996" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

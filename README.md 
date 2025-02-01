@@ -1,0 +1,39 @@
+```mermaid
+graph LR
+    subgraph "Kubernetes Cluster (Azure AKS)"
+
+        subgraph "Customer Agent Services"
+            CA[Kunden-Agent]
+            HPA_CA{{Horizontal Pod<br/>Autoscaler CA}}
+            HPA_CA --o CA
+        end
+
+        subgraph "Backend Services"
+            MA[Mediator-Agent]
+            MS[Mediator Service<br/>Load Balancer<br/>mit Session Affinity]
+            BA_JPEG[Bildverarbeitungs-<br/>Agent (JPEG)]
+            BA_PNG[Bildverarbeitungs-<br/>Agent (PNG)]
+            HPA_MA{{Horizontal Pod<br/>Autoscaler MA}}
+            HPA_BA{{Horizontal Pod<br/>Autoscaler BA}}
+
+            MA <--> MS
+            HPA_MA --o MA
+            HPA_BA --o BA_JPEG
+            HPA_BA --o BA_PNG
+        end
+
+        CA -- HTTP POST (REST API) --> MS
+        MS -- HTTP POST (REST API) --> BA_JPEG
+        MS -- HTTP POST (REST API) --> BA_PNG
+        BA_JPEG -- HTTP Response (REST API) --> MS
+        BA_PNG -- HTTP Response (REST API) --> MS
+        MS -- HTTP Response (REST API) --> CA
+
+    end
+
+    style MS fill:#ccf,stroke:#000,stroke-width:2px,stroke-dasharray: 5 5
+    style CA fill:#fcc,stroke:#000,stroke-width:1px
+    style MA fill:#cff,stroke:#000,stroke-width:1px
+    style BA_JPEG fill:#cfc,stroke:#000,stroke-width:1px
+    style BA_PNG fill:#cfc,stroke:#000,stroke-width:1px
+```
