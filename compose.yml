@@ -1,0 +1,16 @@
+services:
+
+  ci-agent:
+    build: ./src/ci-agent
+    container_name: ci-agent
+    ports:
+      - "5001:5001"
+    depends_on:
+      - azurite
+      - servicebus
+    environment:
+      - AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true; # local development link
+    # - AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net" # Azure Storage Account
+      - AZURE_STORAGE_CONTAINER_NAME=image_compression
+      - SERVICE_BUS_CONNECTION_STRING=Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local
+      - SERVICE_BUS_QUEUE_NAME=image_compression_todo_queue
