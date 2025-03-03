@@ -10,19 +10,19 @@ app = FastAPI()
 
 logging.basicConfig(level=logging.INFO)
 
-azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-azure_storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
-#service_bus_connection_string = os.getenv("SERVICE_BUS_CONNECTION_STRING")
-#service_bus_queue_name = os.getenv("SERVICE_BUS_QUEUE_NAME")
+input_azure_storage_connection_string = os.getenv("INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING")
+input_azure_storage_container_name = os.getenv("INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME")
+#input_service_bus_connection_string = os.getenv("INPUT_SERVICE_BUS_CONNECTION_STRING")
+#input_service_bus_queue_name = os.getenv("INPUT_SERVICE_BUS_QUEUE_NAME")
 
-if not azure_storage_connection_string:
-    raise ValueError("AZURE_STORAGE_CONNECTION_STRING is required")
-if not azure_storage_container_name:
-    raise ValueError("AZURE_STORAGE_CONTAINER_NAME is required")
-#if not service_bus_connection_string:
-#    raise ValueError("SERVICE_BUS_CONNECTION_STRING is required")
-#if not service_bus_queue_name:
-#    raise ValueError("SERVICE_BUS_QUEUE_NAME is required")
+if not input_azure_storage_connection_string:
+    raise ValueError("INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING is required")
+if not input_azure_storage_container_name:
+    raise ValueError("INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME is required")
+#if not input_service_bus_connection_string:
+#    raise ValueError("INPUT_SERVICE_BUS_CONNECTION_STRING is required")
+#if not input_service_bus_queue_name:
+#    raise ValueError("INPUT_SERVICE_BUS_QUEUE_NAME is required")
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
@@ -43,8 +43,8 @@ async def upload_image(file: UploadFile = File(...)):
         image_byte_arr = image_byte_arr.getvalue()
 
         # Upload image to Azure Blob Storage
-        blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
-        blob_container_client = blob_service_client.get_container_client(azure_storage_container_name)
+        blob_service_client = BlobServiceClient.from_connection_string(input_azure_storage_connection_string)
+        blob_container_client = blob_service_client.get_container_client(input_azure_storage_container_name)
 
         if not blob_container_client.exists():
             logging.info("Container existiert nicht, erstelle Container...")
@@ -53,7 +53,6 @@ async def upload_image(file: UploadFile = File(...)):
             except Exception as e:
                 logging.error(f"Error creating container: {e}")
                 raise HTTPException(status_code=500, detail="Error: creating container")
-        
 
         blob_client = blob_container_client.get_blob_client(unique_filename)
         blob_client.upload_blob(image_byte_arr, blob_type="BlockBlob")
@@ -64,8 +63,8 @@ async def upload_image(file: UploadFile = File(...)):
 
         # Send a message to Azure Service Bus
         """
-        service_bus_client = ServiceBusClient.from_connection_string(service_bus_connection_string)
-        with service_bus_client.get_queue_sender(service_bus_queue_name) as sender:
+        service_bus_client = ServiceBusClient.from_connection_string(input_service_bus_connection_string)
+        with service_bus_client.get_queue_sender(input_service_bus_queue_name) as sender:
             message = ServiceBusMessage(f"Image uploaded: {unique_filename}, URL: {blob_url}")
             sender.send_messages(message)
             logging.info(f"Message sent to Service Bus: {message}")
