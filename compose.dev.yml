@@ -9,7 +9,7 @@ services:
     environment:
       - AZURITE_ACCOUNTS=devstoreaccount1:key1
     volumes:
-      - ./azurite_data:/data
+      - ./azurite_data_input:/data
     networks:
       - mynetwork
 
@@ -17,13 +17,13 @@ services:
     image: mcr.microsoft.com/azure-storage/azurite
     container_name: azurite-output
     ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
+      - "20000:10000"
+      - "20001:10001"
+      - "20002:10002"
     environment:
       - AZURITE_ACCOUNTS=devstoreaccount1:key1
     volumes:
-      - ./azurite_data:/data
+      - ./azurite_data_output:/data
     networks:
       - mynetwork
 
@@ -35,7 +35,7 @@ services:
     ports:
       - "5001:5001"
     depends_on:
-      - azurite
+      - azurite-input
     env_file:
       - .env.local
     networks:
@@ -45,11 +45,11 @@ services:
     build:
       context: ./src/ic-agent
       dockerfile: Dockerfile.dev
-    container_name: ci-agent
+    container_name: ic-agent
     ports:
       - "5002:5002"
     depends_on:
-      - azurite
+      - azurite-output
     env_file:
       - .env.local
     networks:

@@ -26,3 +26,10 @@ jobs:
             file: ./src/ci-agent/Dockerfile
             push: true
             tags: ghcr.io/${{ github.repository_owner }}/ci-agent:latest
+      - name: Build and push IC-Agent Docker image
+        uses: docker/build-push-action@v3
+        with:
+            context: ./src/ic-agent
+            file: ./src/ic-agent/Dockerfile
+            push: true
+            tags: ghcr.io/${{ github.repository_owner }}/ic-agent:latest
