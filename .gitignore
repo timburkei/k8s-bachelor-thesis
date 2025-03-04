@@ -3,3 +3,6 @@ azurite_data
 azurite_data_*
 azurite_data_*/
 text.txt
+src/ci-agent/venv
+src/co-agent/co-agent
+src/ic-agent
