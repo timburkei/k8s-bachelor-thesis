@@ -89,7 +89,7 @@ def save_compressed_image(image_data, image_name):
 
 
 # Step 9: Send Message with compresses image url to Message Queue
-def send_message_to_output_queue(image_url):
+def send_message_to_output_queue(image_url, load_testing_id=None):
     logging.info(f"Step 9: Send URL to output queue: {image_url}")
     print(f"✅ Starting Step 9 (Send Message to Output Queue) - Send {image_url} to output service bus queue")
 
@@ -101,7 +101,8 @@ def send_message_to_output_queue(image_url):
             "receiver": "oca",
             "conversation_id": conversation_id,
             "content": {
-                "compressed_image_url": image_url
+                "compressed_image_url": image_url,
+                 "load_testing_id": load_testing_id
             },
             "language": "ACL",
             "encoding": "UTF-8"
@@ -147,17 +148,23 @@ def process_message():
                         message_content = b''.join(list(msg.body))
                     else:
                         message_content = msg.body
-                        
+
                     # JSON-Nachricht parsen
                     message_json = json.loads(message_content.decode("utf-8"))
                     logging.info(f"JSON-Nachricht empfangen: {message_json}")
-                    
+
                     # Bild-URL oder Namen aus der JSON-Nachricht extrahieren
                     if "content" in message_json and "image_uploaded" in message_json["content"]:
                         image_blob_name = message_json["content"]["image_uploaded"]
                         logging.info(f"Bild-Name extrahiert: {image_blob_name}")
                     else:
                         raise ValueError("Ungültiges Nachrichtenformat: 'image_uploaded' nicht gefunden")
+
+                     # Extract load_testing_id if present
+                    load_testing_id = None
+                    if "content" in message_json and "load_testing_id" in message_json["content"]:
+                        load_testing_id = message_json["content"]["load_testing_id"]
+                        logging.info(f"Load testing ID extracted: {load_testing_id}")
 
                     # Schritt 5: Herunterladen des Bildes aus dem Input Blob Storage
                     logging.info(f"Schritt 5: Herunterladen des Bildes {image_blob_name} aus Input Blob Storage")
@@ -167,35 +174,35 @@ def process_message():
                     )
                     image_data = input_blob_client.download_blob().readall()
                     logging.info(f"Bild erfolgreich heruntergeladen, Größe: {len(image_data)} Bytes")
-                    
+
                     # Komprimieren des Bildes (zwischen Schritt 5 und 6)
                     logging.info("Komprimieren des Bildes")
                     compressed_image = compress_image(image_data)
                     compressed_image_name = f"compressed_{image_blob_name}"
                     logging.info(f"Bild komprimiert, neue Größe: {len(compressed_image)} Bytes")
-                    
+
                     # Schritt 6: Speichern des komprimierten Bildes
                     image_url = save_compressed_image(compressed_image, compressed_image_name)
-                    
+
                     # Schritt 7: Warten auf die Bestätigung der Speicherung
                     logging.info("Schritt 7: Warten auf Bestätigung der Speicherung")
                     # Die Funktion save_compressed_image ist synchron, also ist die Speicherung bereits abgeschlossen
                     # In einer asynchronen Umgebung müssten wir hier auf die Bestätigung warten
-                    
+
                     # Schritt 8: Bestätigen und Löschen der Nachricht aus der Input Queue
                     logging.info("Schritt 8: Nachricht in der Input Queue als verarbeitet markieren")
                     receiver.complete_message(msg)
-                    
+
                     # Schritt 9: Senden der URL an die Output Queue
-                    send_message_to_output_queue(image_url)
-                    
+                    send_message_to_output_queue(image_url, load_testing_id)
+
                     logging.info(f"Verarbeitung für {image_blob_name} abgeschlossen")
-                    
+
                 except Exception as e:
                     # Bei Fehlern die Nachricht zurück in die Queue stellen
                     logging.error(f"Fehler bei der Verarbeitung: {e}")
                     receiver.abandon_message(msg)
-                    
+
     except Exception as e:
         logging.error(f"Fehler bei der Verbindung zum Service Bus: {e}")
 

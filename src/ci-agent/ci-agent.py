@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Form
 import io, os, uuid, json
 from PIL import Image
 import logging
@@ -25,7 +25,7 @@ if not input_service_bus_queue_name:
     raise ValueError("INPUT_SERVICE_BUS_QUEUE_NAME is required")
 
 @app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...),  load_testing_id: int = Form(..., description="Pflichtfeld für Load-Testing-ID")):
     try:
         if file.content_type != "image/jpeg":
             raise HTTPException(status_code=400, detail="Only JPEG images are supported")
@@ -70,7 +70,8 @@ async def upload_image(file: UploadFile = File(...)):
             "conversation_id": conversation_id,
             "content": {
                 "image_uploaded": unique_filename,
-                "url": blob_url
+                "url": blob_url,
+                "load_testing_id": load_testing_id
             },
             "language": "ACL",
             "encoding": "UTF-8"

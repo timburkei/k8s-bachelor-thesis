@@ -55,5 +55,30 @@ services:
     networks:
       - mynetwork
 
+  co-agent:
+    build:
+      context: ./src/co-agent
+      dockerfile: Dockerfile.dev
+    container_name: co-agent
+    ports:
+      - "5003:5003"
+    env_file:
+      - .env.local
+    networks:
+      - mynetwork
+
+  
+  lt-agent:
+    build:
+      context: ./src/lt-agent
+      dockerfile: Dockerfile.dev
+    container_name: lt-agent
+    ports:
+      - "5004:5004"
+    env_file:
+      - .env.local
+    networks:
+      - mynetwork
+
 networks:
   mynetwork:
