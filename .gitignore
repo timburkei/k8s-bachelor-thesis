@@ -1,1 +1,5 @@
 azurite_data
+.env.local
+azurite_data_*
+azurite_data_*/
+text.txt

@@ -53,7 +53,8 @@ def compress_image(image_data):
     with io.BytesIO(image_data) as input_stream:
         img = Image.open(input_stream)
         output_stream = io.BytesIO()
-        img.save(output_stream, format="JPEG", quality=compression_percentage)
+        quality = int(compression_percentage)
+        img.save(output_stream, format="JPEG", quality=quality)
         output_stream.seek(0)
         return output_stream.getvalue()
     print(f"⛔ End of the process (Image Compression)")
@@ -134,14 +135,29 @@ def process_message():
 
             # Nichts zu tun, wenn keine Nachrichten vorhanden sind
             if not messages:
+                print("no messages found")
                 return
 
             # Verarbeitung der abgerufenen Nachricht
             for msg in messages:
                 try:
                     # Blob-Name aus der Nachricht extrahieren
-                    image_blob_name = msg.body.decode("utf-8")
-                    logging.info(f"Nachricht empfangen für Bild: {image_blob_name}")
+                    if hasattr(msg.body, '__iter__') and not isinstance(msg.body, (bytes, str)):
+                        # Handle generator case by consuming it
+                        message_content = b''.join(list(msg.body))
+                    else:
+                        message_content = msg.body
+                        
+                    # JSON-Nachricht parsen
+                    message_json = json.loads(message_content.decode("utf-8"))
+                    logging.info(f"JSON-Nachricht empfangen: {message_json}")
+                    
+                    # Bild-URL oder Namen aus der JSON-Nachricht extrahieren
+                    if "content" in message_json and "image_uploaded" in message_json["content"]:
+                        image_blob_name = message_json["content"]["image_uploaded"]
+                        logging.info(f"Bild-Name extrahiert: {image_blob_name}")
+                    else:
+                        raise ValueError("Ungültiges Nachrichtenformat: 'image_uploaded' nicht gefunden")
 
                     # Schritt 5: Herunterladen des Bildes aus dem Input Blob Storage
                     logging.info(f"Schritt 5: Herunterladen des Bildes {image_blob_name} aus Input Blob Storage")
