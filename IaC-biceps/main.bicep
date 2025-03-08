@@ -13,8 +13,6 @@ param dnsPrefix string
 param osDiskSizeGB int = 0
 
 @description('The number of nodes for the cluster.')
-// @minValue(1)
-// @maxValue(3)
 param agentCount int = 1
 
 @description('The size of the Virtual Machine.')
@@ -23,8 +21,17 @@ param agentVMSize string = 'Standard_B2as_v2'
 @description('User name for the Linux Virtual Machines.')
 param linuxAdminUsername string
 
-@description('Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example \'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm\'')
+@description('Configure all linux machines with the SSH RSA public key string.')
 param sshRSAPublicKey string
+
+@description('The name of the Azure Storage Account.')
+param storageAccountName string = 'stroageAccountThesis'
+
+@description('The name of the Azure Service Bus namespace.')
+param serviceBusNamespace string = 'multiagentbus'
+
+@description('The name of the Azure Service Bus queue.')
+param serviceBusQueue string = 'multiagent-queue'
 
 resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   name: clusterName
@@ -61,4 +68,11 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   }
 }
 
-output controlPlaneFQDN string = aks.properties.fqdn
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+}

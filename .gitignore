@@ -6,3 +6,12 @@ text.txt
 src/ci-agent/venv
 src/co-agent/co-agent
 src/ic-agent
+IaC/terraform.tfvars
+IaC/.terraform
+IaC/terraform.tfstate
+IaC/test
+.env.hybrid
+IaC/.terraform.lock.hcl
+IaC/terraform.tfstate.backup
+.DS_Store
+IaC/.DS_Store

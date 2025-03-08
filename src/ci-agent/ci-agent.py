@@ -91,3 +91,6 @@ async def upload_image(file: UploadFile = File(...),  load_testing_id: int = For
     except Exception as e:
         logging.error(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+
+    
