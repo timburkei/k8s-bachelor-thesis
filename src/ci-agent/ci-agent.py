@@ -1,10 +1,11 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile, Form
-import io, os, uuid, json
+import io, os, uuid, json, base64
 from PIL import Image
 import logging
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceExistsError
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
+from pydantic import BaseModel 
 
 app = FastAPI()
 
@@ -24,18 +25,25 @@ if not input_service_bus_connection_string:
 if not input_service_bus_queue_name:
     raise ValueError("INPUT_SERVICE_BUS_QUEUE_NAME is required")
 
+class ImageUploadRequest(BaseModel):
+    image: str
+    load_testing_id: str
+
 @app.post("/upload")
-async def upload_image(file: UploadFile = File(...),  load_testing_id: int = Form(..., description="Pflichtfeld für Load-Testing-ID")):
+async def upload_image(request_data: ImageUploadRequest):
     try:
-        if file.content_type != "image/jpeg":
-            raise HTTPException(status_code=400, detail="Only JPEG images are supported")
+        if not request_data.image.startswith("data:image/jpeg;base64,"):
+            raise HTTPException(status_code=400, detail="Only JPEG base64 images are supported")
 
-        logging.info(f"Uploading image: {file.filename}")
-        image = Image.open(io.BytesIO(await file.read()))
-        logging.info(f"Image uploaded: {file.filename}, Größe: {image.size}")
+        base64_data = request_data.image.replace("data:image/jpeg;base64,", "")
+        image_data = base64.b64decode(base64_data)
+        logging.info(f"Processing base64 image with load_testing_id: {request_data.load_testing_id}")
 
-        # Generate a unique filename
-        unique_filename = f"{uuid.uuid4()}.jpg"
+        image = Image.open(io.BytesIO(image_data))
+        logging.info(f"Image loaded successfully, Größe: {image.size}")
+
+        # Use load_testing_id as the filename
+        filename = f"{request_data.load_testing_id}.jpg"
 
         # Convert image to bytes
         image_byte_arr = io.BytesIO()
@@ -54,8 +62,8 @@ async def upload_image(file: UploadFile = File(...),  load_testing_id: int = For
                 logging.error(f"Error creating container: {e}")
                 raise HTTPException(status_code=500, detail="Error: creating container")
 
-        blob_client = input_blob_container_client.get_blob_client(unique_filename)
-        blob_client.upload_blob(image_byte_arr, blob_type="BlockBlob")
+        blob_client = input_blob_container_client.get_blob_client(filename)
+        blob_client.upload_blob(image_byte_arr, blob_type="BlockBlob",  overwrite=True)
 
         # Get the URL of the uploaded blob
         blob_url = blob_client.url
@@ -69,9 +77,9 @@ async def upload_image(file: UploadFile = File(...),  load_testing_id: int = For
             "receiver": "ica",
             "conversation_id": conversation_id,
             "content": {
-                "image_uploaded": unique_filename,
+                "image_uploaded": filename,
                 "url": blob_url,
-                "load_testing_id": load_testing_id
+                "load_testing_id": request_data.load_testing_id
             },
             "language": "ACL",
             "encoding": "UTF-8"
@@ -91,6 +99,7 @@ async def upload_image(file: UploadFile = File(...),  load_testing_id: int = For
     except Exception as e:
         logging.error(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
 
-    
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
