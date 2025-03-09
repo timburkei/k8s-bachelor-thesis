@@ -24,25 +24,19 @@ resource "azurerm_kubernetes_cluster" "aks_cluster_thesis_hdm_25" {
   }
 }
 
+resource "kubernetes_namespace" "keda" {
+  metadata {
+    name = "keda"
+  }
+}
+
 resource "helm_release" "keda" {
   name       = "keda"
   repository = "https://kedacore.github.io/charts"
   chart      = "keda"
-  namespace  = "keda"
+  namespace  = kubernetes_namespace.keda.metadata[0].name
+  # depends_on = [kubernetes_namespace.keda]
 }
-
-
-
-
-
-resource "helm_release" "ic_agent_scaledobject" {
-  name       = "ic-agent-scaledobject"
-  repository = "https://kedacore.github.io/charts"
-  chart      = "keda"
-  namespace  = "keda"
-  values     = [file("ic-agent-keda-values.yaml")]
-}
-
 
 
 # resource "helm_release" "co_agent_scaledobject" {

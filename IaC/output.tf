@@ -1,7 +1,7 @@
 output "input_azure_blob_storage_connection_string" {
   description = "INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING="
   value       = azurerm_storage_account.hdm-25-stg-input-storage-acc.primary_connection_string
-  sensitive   = true 
+  sensitive   = true
 }
 
 output "input_azure_blob-storage_container_name" {
@@ -23,7 +23,7 @@ output "input_service_bus_queue_name" {
 output "output_azure_blob_storage_connection_string" {
   description = "OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING="
   value       = azurerm_storage_account.hdm-25-output-storage-acc.primary_connection_string
-  sensitive   = true 
+  sensitive   = true
 }
 
 output "output_azure_blob_storage_container_name" {

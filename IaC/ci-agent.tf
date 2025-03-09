@@ -61,7 +61,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "ci_agent_hpa" {
       resource {
         name = "cpu"
         target {
-          type               = "Utilization"
+          type                = "Utilization"
           average_utilization = 50
         }
       }
@@ -73,10 +73,10 @@ resource "kubernetes_service" "ci_agent_service" {
   metadata {
     name = "ci-agent-service"
     annotations = {
-      "service.beta.kubernetes.io/azure-load-balancer-internal" = "false"  # External facing load balancer
-      "service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path" = "/health"  # Health probe path
-      "service.beta.kubernetes.io/azure-dns-label-name" = "ci-agent-hdm-25"  # DNS label for the public IP
-      "service.beta.kubernetes.io/azure-load-balancer-resource-group" = azurerm_resource_group.rg-thesis.name
+      "service.beta.kubernetes.io/azure-load-balancer-internal"                  = "false"           # External facing load balancer
+      "service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path" = "/health"         # Health probe path
+      "service.beta.kubernetes.io/azure-dns-label-name"                          = "ci-agent-hdm-25" # DNS label for the public IP
+      "service.beta.kubernetes.io/azure-load-balancer-resource-group"            = azurerm_resource_group.rg-thesis.name
     }
   }
 
@@ -109,3 +109,4 @@ resource "kubernetes_secret" "azure_servicebus_auth" {
     connectionString = azurerm_servicebus_queue_authorization_rule.input-queue-connection-string.primary_connection_string
   }
 }
+
