@@ -20,3 +20,4 @@ IaC-1/terraform.tfstate
 IaC-1/terraform.tfstate.backup
 IaC-2/terraform.tfstate
 IaC-2/terraform.tfstate.backup
+IaC-2/.terraform
