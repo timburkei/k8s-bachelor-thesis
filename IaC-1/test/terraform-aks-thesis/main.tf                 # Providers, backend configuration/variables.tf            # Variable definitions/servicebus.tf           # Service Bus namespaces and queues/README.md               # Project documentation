@@ -1,0 +1,171 @@
+# main.tf
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.21.1"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.36.0"
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "2.17.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+  subscription_id = var.azure_subscription_id
+}
+
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "az"
+    args        = [
+      "aks", "get-credentials",
+      "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+      "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+      "--admin",
+      "--file", "-"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "az"
+      args        = [
+        "aks", "get-credentials",
+        "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+        "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+        "--admin",
+        "--file", "-"
+      ]
+    }
+  }
+}
+
+resource "azurerm_resource_group" "rg-thesis" {
+  name     = "thesis-25-hdm-stuttgart"
+  location = "westeurope"
+}
+
+# variables.tf
+variable "azure_subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
+}
+
+variable "aks_cluster_name" {
+  description = "Name of the AKS cluster"
+  type        = string
+  default     = "thesis-aks-cluster"
+}
+
+variable "location" {
+  description = "Azure location for resources"
+  type        = string
+  default     = "westeurope"
+}
+
+variable "node_count" {
+  description = "Number of nodes in the AKS cluster"
+  type        = number
+  default     = 2
+}
+
+variable "vm_size" {
+  description = "VM size for the AKS nodes"
+  type        = string
+  default     = "Standard_DS2_v2"
+}
+
+variable "ci_agent_image" {
+  description = "Docker image for CI agent"
+  type        = string
+  default     = "ghcr.io/timburkei/ci-agent:latest"
+}
+
+variable "ic_agent_image" {
+  description = "Docker image for IC agent"
+  type        = string
+  default     = "ghcr.io/timburkei/ic-agent:latest"
+}
+
+variable "co_agent_image" {
+  description = "Docker image for CO agent"
+  type        = string
+  default     = "ghcr.io/timburkei/co-agent:latest"
+}
+
+# servicebus.tf
+resource "azurerm_servicebus_namespace" "sb-thesis" {
+  name                = "thesis-25-hdm-stuttgart-service-bus"
+  resource_group_name = azurerm_resource_group.rg-thesis.name
+  location            = azurerm_resource_group.rg-thesis.location
+  sku                 = "Basic"
+
+  tags = {
+    source = "terraform"
+  }
+}
+
+resource "azurerm_servicebus_queue" "input_queue" {
+  name               = "input-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "input_queue_connection_string" {
+  name     = "input-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.input_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+resource "azurerm_servicebus_queue" "output_queue" {
+  name               = "output-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "output_queue_connection_string" {
+  name     = "output-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.output_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+# README.md
+# Project Documentation
+
+## Overview
+This project defines an Azure Kubernetes Service (AKS) cluster for a thesis project, which includes three types of Docker containers: CI agent, IC agent, and CO agent. The CI agent is scaled using Horizontal Pod Autoscaler (HPA) based on CPU utilization, while the IC agent and CO agent are scaled using KEDA based on message queues.
+
+## Setup Instructions
+1. Ensure you have Terraform installed.
+2. Configure your Azure credentials.
+3. Update the `terraform.tfvars` file with your Azure subscription ID and any other necessary values.
+4. Run `terraform init` to initialize the project.
+5. Run `terraform apply` to create the resources.
+
+## Usage
+After deployment, the AKS cluster will be set up with the specified agents and scaling configurations. You can monitor the performance and scaling behavior through the Azure portal.

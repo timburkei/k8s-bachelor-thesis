@@ -1,0 +1,188 @@
+# main.tf
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.21.1"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.36.0"
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "2.17.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "az"
+    args        = [
+      "aks", "get-credentials",
+      "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+      "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+      "--admin",
+      "--file", "-"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "az"
+      args        = [
+        "aks", "get-credentials",
+        "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+        "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+        "--admin",
+        "--file", "-"
+      ]
+    }
+  }
+}
+
+# variables.tf
+variable "azure_subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
+}
+
+variable "resource_group_name" {
+  description = "Resource Group Name"
+  type        = string
+  default     = "thesis-25-hdm-stuttgart"
+}
+
+variable "location" {
+  description = "Azure Location"
+  type        = string
+  default     = "westeurope"
+}
+
+variable "aks_cluster_name" {
+  description = "AKS Cluster Name"
+  type        = string
+  default     = "thesis-aks-cluster-hdm-25"
+}
+
+variable "ci_agent_image" {
+  description = "CI Agent Docker Image"
+  type        = string
+  default     = "ghcr.io/timburkei/ci-agent:latest"
+}
+
+variable "ic_agent_image" {
+  description = "IC Agent Docker Image"
+  type        = string
+  default     = "ghcr.io/timburkei/ic-agent:latest"
+}
+
+variable "co_agent_image" {
+  description = "CO Agent Docker Image"
+  type        = string
+  default     = "ghcr.io/timburkei/co-agent:latest"
+}
+
+# servicebus.tf
+resource "azurerm_servicebus_namespace" "sb-thesis" {
+  name                = "thesis-25-hdm-stuttgart-service-bus"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  sku                 = "Basic"
+
+  tags = {
+    source = "terraform"
+  }
+}
+
+resource "azurerm_servicebus_queue" "input_queue" {
+  name               = "input-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "input_queue_connection_string" {
+  name     = "input-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.input_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+resource "azurerm_servicebus_queue" "output_queue" {
+  name               = "output-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "output_queue_connection_string" {
+  name     = "output-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.output_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+# outputs.tf
+output "input_azure_blob_storage_connection_string" {
+  description = "INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING="
+  value       = azurerm_storage_account.hdm-25-stg-input-storage-acc.primary_connection_string
+  sensitive   = true 
+}
+
+output "input_azure_blob_storage_container_name" {
+  description = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME="
+  value       = azurerm_storage_container.input-container.name
+}
+
+output "input_service_bus_connection_string" {
+  description = "INPUT_AZURE_SERVICE_BUS_CONNECTION_STRING="
+  value       = azurerm_servicebus_queue_authorization_rule.input_queue_connection_string.primary_connection_string
+  sensitive   = true
+}
+
+output "input_service_bus_queue_name" {
+  description = "INPUT_AZURE_SERVICE_BUS_QUEUE_NAME="
+  value       = azurerm_servicebus_queue.input_queue.name
+}
+
+output "output_azure_blob_storage_connection_string" {
+  description = "OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING="
+  value       = azurerm_storage_account.hdm-25-output-storage-acc.primary_connection_string
+  sensitive   = true 
+}
+
+output "output_azure_blob_storage_container_name" {
+  description = "OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME="
+  value       = azurerm_storage_container.output-container.name
+}
+
+output "output_service_bus_connection_string" {
+  description = "OUTPUT_AZURE_SERVICE_BUS_CONNECTION_STRING="
+  value       = azurerm_servicebus_queue_authorization_rule.output_queue_connection_string.primary_connection_string
+  sensitive   = true
+}
+
+output "output_service_bus_queue_name" {
+  description = "OUTPUT_AZURE_SERVICE_BUS_QUEUE_NAME="
+  value       = azurerm_servicebus_queue.output_queue.name
+}

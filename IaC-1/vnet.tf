@@ -1,3 +1,11 @@
+resource "azurerm_subnet" "aks_subnet" {
+  name                 = "aks-subnet"
+  resource_group_name  = azurerm_resource_group.rg-thesis.name
+  virtual_network_name = azurerm_virtual_network.aks_vnet.name
+  address_prefixes     = ["10.240.0.0/24"]  # Anderer IP-Bereich
+}
+
+
 resource "azurerm_subnet" "aci_subnet" {
   name                 = "aci-subnet"
   resource_group_name  = azurerm_resource_group.rg-thesis.name

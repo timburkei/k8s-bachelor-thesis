@@ -41,3 +41,13 @@ output "output_service_bus_queue_name" {
   description = "OUTPUT_AZURE_SERVICE_BUS_QUEUE_NAME="
   value       = azurerm_servicebus_queue.output-queue.name
 }
+
+output "kube_config" {
+  value = {
+    host                   = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].host
+    client_certificate     = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].client_certificate
+    client_key             = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].client_key
+    cluster_ca_certificate = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].cluster_ca_certificate
+  }
+  sensitive = true
+}

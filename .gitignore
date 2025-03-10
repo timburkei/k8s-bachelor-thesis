@@ -15,3 +15,8 @@ IaC/.terraform.lock.hcl
 IaC/terraform.tfstate.backup
 .DS_Store
 IaC/.DS_Store
+IaC-1/.terraform.tfstate.lock.info
+IaC-1/terraform.tfstate
+IaC-1/terraform.tfstate.backup
+IaC-2/terraform.tfstate
+IaC-2/terraform.tfstate.backup

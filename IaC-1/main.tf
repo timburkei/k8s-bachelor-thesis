@@ -4,22 +4,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "4.21.1"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "2.36.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "2.17.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.4.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2.0"
-    }
   }
 }
 

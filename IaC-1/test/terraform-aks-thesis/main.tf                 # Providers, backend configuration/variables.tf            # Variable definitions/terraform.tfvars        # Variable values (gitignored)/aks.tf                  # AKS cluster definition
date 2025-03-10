@@ -1,0 +1,122 @@
+# main.tf
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.21.1"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.36.0"
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "2.17.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+  subscription_id = var.azure_subscription_id
+}
+
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "az"
+    args        = [
+      "aks", "get-credentials",
+      "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+      "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+      "--admin",
+      "--file", "-"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "az"
+      args        = [
+        "aks", "get-credentials",
+        "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+        "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+        "--admin",
+        "--file", "-"
+      ]
+    }
+  }
+}
+
+resource "azurerm_resource_group" "rg-thesis" {
+  name     = "thesis-25-hdm-stuttgart"
+  location = "westeurope"
+} 
+
+# variables.tf
+variable "azure_subscription_id" {
+  description = "The Azure subscription ID"
+  type        = string
+}
+
+variable "aks_cluster_name" {
+  description = "The name of the AKS cluster"
+  type        = string
+}
+
+variable "location" {
+  description = "The Azure location for resources"
+  type        = string
+  default     = "westeurope"
+}
+
+variable "node_count" {
+  description = "The number of nodes in the AKS cluster"
+  type        = number
+  default     = 2
+}
+
+variable "vm_size" {
+  description = "The size of the virtual machines in the AKS cluster"
+  type        = string
+  default     = "Standard_DS2_v2"
+}
+
+# terraform.tfvars
+azure_subscription_id = "your-azure-subscription-id"
+aks_cluster_name      = "thesis-aks-cluster-hdm-25"
+location              = "westeurope"
+node_count            = 2
+vm_size               = "Standard_DS2_v2"
+
+# aks.tf
+resource "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = var.aks_cluster_name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-thesis.name
+  dns_prefix          = "thesisaks"
+
+  default_node_pool {
+    name       = "default"
+    node_count = var.node_count
+    vm_size    = var.vm_size
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_profile {
+    network_plugin = "azure"
+    network_policy = "azure"
+  }
+}

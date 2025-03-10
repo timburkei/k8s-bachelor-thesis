@@ -6,58 +6,83 @@ resource "kubernetes_deployment" "ic_agent" {
 
   spec {
     replicas = 1
-    selector { match_labels = { app = "ic-agent" } }
+    selector {
+      match_labels = { app = "ic-agent" }
+    }
 
     template {
-      metadata { labels = { app = "ic-agent" } }
+      metadata {
+        labels = { app = "ic-agent" }
+      }
+
       spec {
+        toleration {
+          key      = "virtual-kubelet.io/provider"
+          operator = "Equal"
+          value    = "azure"
+          effect   = "NoSchedule"
+        }
+
+        affinity {
+          node_affinity {
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 1
+              preference {
+                match_expressions {
+                  key      = "kubernetes.io/role"
+                  operator = "NotIn"
+                  values   = ["virtual-kubelet"]
+                }
+              }
+            }
+          }
+        }
+
+
+
         container {
           image = "ghcr.io/timburkei/ic-agent:latest"
           name  = "ic-agent"
 
           env {
             name  = "INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING"
-            value = azurerm_storage_account.hdm-25-stg-input-storage-acc.primary_connection_string
+            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_connection_string
           }
           env {
             name  = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
-            value = azurerm_storage_container.input-container.name
+            value = data.terraform_remote_state.infrastructure.outputs["input_azure_blob-storage_container_name"]
           }
           env {
             name  = "INPUT_SERVICE_BUS_CONNECTION_STRING"
-            value = azurerm_servicebus_queue_authorization_rule.input-queue-connection-string.primary_connection_string
+            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connectin_string
           }
           env {
             name  = "INPUT_SERVICE_BUS_QUEUE_NAME"
-            value = azurerm_servicebus_queue.input-queue.name
+            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_queue_name
           }
-
-          # Manuelle Konfigurationen
           env {
             name  = "COMPRESSION_PERCENTAGE"
-            value = "80" # 80% Qualität (20% Kompression)
+            value = "50"
           }
           env {
             name  = "MAX_MESSAGE_COUNT"
-            value = "5" # 5 Nachrichten pro Verarbeitung
+            value = "3"
           }
-
-          # Output-Konfiguration (bereits vorhanden)
           env {
             name  = "OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING"
-            value = azurerm_storage_account.hdm-25-output-storage-acc.primary_connection_string
+            value = data.terraform_remote_state.infrastructure.outputs.output_azure_blob_storage_connection_string
           }
           env {
             name  = "OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
-            value = azurerm_storage_container.output-container.name
+            value = data.terraform_remote_state.infrastructure.outputs.output_azure_blob_storage_container_name
           }
           env {
             name  = "OUTPUT_SERVICE_BUS_CONNECTION_STRING"
-            value = azurerm_servicebus_queue_authorization_rule.output-queue-connection-string.primary_connection_string
+            value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_connectin_string
           }
           env {
             name  = "OUTPUT_SERVICE_BUS_QUEUE_NAME"
-            value = azurerm_servicebus_queue.output-queue.name
+            value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_queue_name
           }
         }
       }
@@ -83,8 +108,8 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
         {
           type = "azure-servicebus"
           metadata = {
-            queueName    = azurerm_servicebus_queue.input-queue.name
-            messageCount = "5" # Scale when there are 5 or more messages
+            queueName    = data.terraform_remote_state.infrastructure.outputs.input_service_bus_queue_name
+            messageCount = "15"
           }
           authenticationRef = {
             name = "azure-servicebus-auth"
@@ -93,7 +118,7 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
       ]
     }
   }
-  depends_on = [helm_release.keda]
+  depends_on = [null_resource.wait_for_keda_crds, kubernetes_secret.servicebus_connection_secret]
 }
 
 resource "kubernetes_manifest" "azure_servicebus_auth" {
@@ -114,18 +139,15 @@ resource "kubernetes_manifest" "azure_servicebus_auth" {
       ]
     }
   }
-
-   depends_on = [helm_release.keda]
+  depends_on = [null_resource.wait_for_keda_crds, kubernetes_secret.servicebus_connection_secret]
 }
 
-# Kubernetes Secret für die Service Bus Connection
 resource "kubernetes_secret" "servicebus_connection_secret" {
   metadata {
     name      = "servicebus-connection-secret"
     namespace = "default"
   }
-
   data = {
-    "connection-string" = azurerm_servicebus_queue_authorization_rule.input-queue-connection-string.primary_connection_string
+    "connection-string" = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connectin_string
   }
 }

@@ -1,0 +1,226 @@
+# main.tf
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.21.1"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.36.0"
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "2.17.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+provider "kubernetes" {
+  host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "az"
+    args        = [
+      "aks", "get-credentials",
+      "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+      "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+      "--admin",
+      "--file", "-"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].host
+    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster.kube_config[0].cluster_ca_certificate)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "az"
+      args        = [
+        "aks", "get-credentials",
+        "--resource-group", azurerm_kubernetes_cluster.aks_cluster.resource_group_name,
+        "--name", azurerm_kubernetes_cluster.aks_cluster.name,
+        "--admin",
+        "--file", "-"
+      ]
+    }
+  }
+}
+
+resource "azurerm_resource_group" "rg-thesis" {
+  name     = "thesis-25-hdm-stuttgart"
+  location = "westeurope"
+}
+
+# variables.tf
+variable "azure_subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
+}
+
+variable "location" {
+  description = "Azure location for resources"
+  type        = string
+  default     = "westeurope"
+}
+
+variable "aks_cluster_name" {
+  description = "Name of the AKS cluster"
+  type        = string
+  default     = "thesis-aks-cluster"
+}
+
+variable "node_count" {
+  description = "Number of nodes in the AKS cluster"
+  type        = number
+  default     = 2
+}
+
+variable "vm_size" {
+  description = "VM size for the AKS nodes"
+  type        = string
+  default     = "Standard_DS2_v2"
+}
+
+variable "ci_agent_image" {
+  description = "Docker image for CI agent"
+  type        = string
+  default     = "ghcr.io/timburkei/ci-agent:latest"
+}
+
+variable "ic_agent_image" {
+  description = "Docker image for IC agent"
+  type        = string
+  default     = "ghcr.io/timburkei/ic-agent:latest"
+}
+
+variable "co_agent_image" {
+  description = "Docker image for CO agent"
+  type        = string
+  default     = "ghcr.io/timburkei/co-agent:latest"
+}
+
+# servicebus.tf
+resource "azurerm_servicebus_namespace" "sb-thesis" {
+  name                = "thesis-25-hdm-stuttgart-service-bus"
+  resource_group_name = azurerm_resource_group.rg-thesis.name
+  location            = azurerm_resource_group.rg-thesis.location
+  sku                 = "Basic"
+
+  tags = {
+    source = "terraform"
+  }
+}
+
+resource "azurerm_servicebus_queue" "input_queue" {
+  name               = "input-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "input_queue_connection_string" {
+  name     = "input-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.input_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+resource "azurerm_servicebus_queue" "output_queue" {
+  name               = "output-queue"
+  namespace_id       = azurerm_servicebus_namespace.sb-thesis.id
+  lock_duration      = "PT30S"
+  max_delivery_count = 5
+}
+
+resource "azurerm_servicebus_queue_authorization_rule" "output_queue_connection_string" {
+  name     = "output-queue-connection-string"
+  queue_id = azurerm_servicebus_queue.output_queue.id
+
+  listen = true
+  send   = true
+  manage = true
+}
+
+# kubernetes/co-agent.tf
+resource "kubernetes_deployment" "co_agent" {
+  metadata {
+    name = "co-agent"
+  }
+
+  spec {
+    replicas = 2
+    selector {
+      match_labels = { app = "co-agent" }
+    }
+
+    template {
+      metadata {
+        labels = { app = "co-agent" }
+      }
+
+      spec {
+        container {
+          image = var.co_agent_image
+          name  = "co-agent"
+
+          env {
+            name  = "OUTPUT_SERVICE_BUS_CONNECTION_STRING"
+            value = azurerm_servicebus_queue_authorization_rule.output_queue_connection_string.primary_connection_string
+          }
+          env {
+            name  = "OUTPUT_SERVICE_BUS_QUEUE_NAME"
+            value = azurerm_servicebus_queue.output_queue.name
+          }
+        }
+      }
+    }
+  }
+}
+
+# kubernetes/keda.tf
+resource "helm_release" "keda" {
+  name       = "keda"
+  repository = "https://kedacore.github.io/charts"
+  chart      = "keda"
+  namespace  = "keda"
+}
+
+resource "kubernetes_horizontal_pod_autoscaler" "co_agent_hpa" {
+  metadata {
+    name = "co-agent-hpa"
+  }
+
+  spec {
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.co_agent.metadata[0].name
+    }
+    min_replicas = 2
+    max_replicas = 10
+    metrics {
+      type = "External"
+      external {
+        metric {
+          name = "queueLength"
+        }
+        target {
+          type = "Average"
+          average_value = "5"
+        }
+      }
+    }
+  }
+}
