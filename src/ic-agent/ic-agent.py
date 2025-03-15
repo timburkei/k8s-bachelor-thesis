@@ -30,17 +30,17 @@ if not max_message_count:
 # Output configuration
 output_azure_storage_connection_string = os.getenv("OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING")
 output_azure_storage_container_name = os.getenv("OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME")
-output_service_bus_connection_string = os.getenv("OUTPUT_SERVICE_BUS_CONNECTION_STRING")
-output_service_bus_queue_name = os.getenv("OUTPUT_SERVICE_BUS_QUEUE_NAME")
+# output_service_bus_connection_string = os.getenv("OUTPUT_SERVICE_BUS_CONNECTION_STRING")
+# output_service_bus_queue_name = os.getenv("OUTPUT_SERVICE_BUS_QUEUE_NAME")
 
 if not output_azure_storage_connection_string:
     raise ValueError("OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING is required")
 if not output_azure_storage_container_name:
     raise ValueError("OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME is required")
-if not output_service_bus_connection_string:
-    raise ValueError("OUTPUT_SERVICE_BUS_CONNECTION_STRING is required")
-if not output_service_bus_queue_name:
-    raise ValueError("OUTPUT_SERVICE_BUS_QUEUE_NAME is required")
+# if not output_service_bus_connection_string:
+#     raise ValueError("OUTPUT_SERVICE_BUS_CONNECTION_STRING is required")
+# if not output_service_bus_queue_name:
+#     raise ValueError("OUTPUT_SERVICE_BUS_QUEUE_NAME is required")
 
 # Initialize clients
 input_blob_service_client = BlobServiceClient.from_connection_string(input_azure_storage_connection_string)
@@ -89,37 +89,37 @@ def save_compressed_image(image_data, image_name):
 
 
 # Step 9: Send Message with compresses image url to Message Queue
-def send_message_to_output_queue(image_url, load_testing_id=None):
-    logging.info(f"Step 9: Send URL to output queue: {image_url}")
-    print(f"✅ Starting Step 9 (Send Message to Output Queue) - Send {image_url} to output service bus queue")
+# def send_message_to_output_queue(image_url, load_testing_id=None):
+#     logging.info(f"Step 9: Send URL to output queue: {image_url}")
+#     print(f"✅ Starting Step 9 (Send Message to Output Queue) - Send {image_url} to output service bus queue")
 
-    try:
-        conversation_id = str(uuid.uuid4())
-        fipa_acl_message = {
-            "performative": "inform",
-            "sender": "ica",
-            "receiver": "oca",
-            "conversation_id": conversation_id,
-            "content": {
-                "compressed_image_url": image_url,
-                 "load_testing_id": load_testing_id
-            },
-            "language": "ACL",
-            "encoding": "UTF-8"
-        }
+#     try:
+#         conversation_id = str(uuid.uuid4())
+#         fipa_acl_message = {
+#             "performative": "inform",
+#             "sender": "ica",
+#             "receiver": "oca",
+#             "conversation_id": conversation_id,
+#             "content": {
+#                 "compressed_image_url": image_url,
+#                  "load_testing_id": load_testing_id
+#             },
+#             "language": "ACL",
+#             "encoding": "UTF-8"
+#         }
 
-        with output_service_bus_client.get_queue_sender(output_service_bus_queue_name) as sender:
-            # Convert message to JSON string
-            message_json = json.dumps(fipa_acl_message)
-            message = ServiceBusMessage(message_json)
-            sender.send_messages(message)
+#         with output_service_bus_client.get_queue_sender(output_service_bus_queue_name) as sender:
+#             # Convert message to JSON string
+#             message_json = json.dumps(fipa_acl_message)
+#             message = ServiceBusMessage(message_json)
+#             sender.send_messages(message)
 
-            print(f"⛔ End of Step 9 (Send Message to Output Queue) - FIPA ACL message sent to output service bus queue")
-            logging.info(f"FIPA ACL message sent to Service Bus. Conversation ID: {conversation_id}")
-    except Exception as e:
-        logging.error(f"Fehler beim Senden der FIPA ACL Nachricht an die Output Queue: {e}")
-        print(f"❗Step 9 (Send Message to Output Queue) - Error when sending the message {e}")
-        raise
+#             print(f"⛔ End of Step 9 (Send Message to Output Queue) - FIPA ACL message sent to output service bus queue")
+#             logging.info(f"FIPA ACL message sent to Service Bus. Conversation ID: {conversation_id}")
+#     except Exception as e:
+#         logging.error(f"Fehler beim Senden der FIPA ACL Nachricht an die Output Queue: {e}")
+#         print(f"❗Step 9 (Send Message to Output Queue) - Error when sending the message {e}")
+#         raise
 
 # Step 4 to 8
 def process_message():
@@ -194,7 +194,7 @@ def process_message():
                     receiver.complete_message(msg)
 
                     # Schritt 9: Senden der URL an die Output Queue
-                    send_message_to_output_queue(image_url, load_testing_id)
+                    # send_message_to_output_queue(image_url, load_testing_id)
 
                     logging.info(f"Verarbeitung für {image_blob_name} abgeschlossen")
 

@@ -31,16 +31,16 @@ output "output_azure_blob_storage_container_name" {
   value       = azurerm_storage_container.output-container.name
 }
 
-output "output_service_bus_connectin_string" {
-  description = "OUTPUT_AZURE_SERVICE_BUS_CONNECTION_STRING="
-  value       = azurerm_servicebus_queue_authorization_rule.output-queue-connection-string.primary_connection_string
-  sensitive   = true
-}
+# output "output_service_bus_connectin_string" {
+#   description = "OUTPUT_AZURE_SERVICE_BUS_CONNECTION_STRING="
+#   value       = azurerm_servicebus_queue_authorization_rule.output-queue-connection-string.primary_connection_string
+#   sensitive   = true
+# }
 
-output "output_service_bus_queue_name" {
-  description = "OUTPUT_AZURE_SERVICE_BUS_QUEUE_NAME="
-  value       = azurerm_servicebus_queue.output-queue.name
-}
+# output "output_service_bus_queue_name" {
+#   description = "OUTPUT_AZURE_SERVICE_BUS_QUEUE_NAME="
+#   value       = azurerm_servicebus_queue.output-queue.name
+# }
 
 output "kube_config" {
   value = {
