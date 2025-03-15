@@ -29,42 +29,6 @@ provider "helm" {
   }
 }
 
-# provider "kubernetes" {
-#   host                   = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].host
-#   cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].cluster_ca_certificate)
-
-#   exec {
-#     api_version = "client.authentication.k8s.io/v1beta1"
-#     command     = "az"
-#     args = [
-#       "aks", "get-credentials",
-#       "--resource-group", azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.resource_group_name,
-#       "--name", azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.name,
-#       "--admin",
-#       "--file", "-"
-#     ]
-#   }
-# }
-
-# provider "helm" {
-#   kubernetes {
-#     host                   = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].host
-#     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.kube_config[0].cluster_ca_certificate)
-
-#     exec {
-#       api_version = "client.authentication.k8s.io/v1beta1"
-#       command     = "az"
-#       args = [
-#         "aks", "get-credentials",
-#         "--resource-group", azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.resource_group_name,
-#         "--name", azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.name,
-#         "--admin",
-#         "--file", "-"
-#       ]
-#     }
-#   }
-# }
-
 resource "azurerm_resource_group" "rg-thesis" {
   name     = "thesis-25-hdm-stuttgart"
   location = "westeurope"

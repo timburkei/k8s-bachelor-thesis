@@ -118,3 +118,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "ci_agent_hpa" {
     }
   }
 }
+
+
+
+

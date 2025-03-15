@@ -26,3 +26,5 @@ IaC-2/.terraform
 .terraform/
 *.tfstate
 *.tfstate.backup
+test.jtl
+jmeter.log
