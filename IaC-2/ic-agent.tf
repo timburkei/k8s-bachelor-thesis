@@ -76,14 +76,14 @@ resource "kubernetes_deployment" "ic_agent" {
             name  = "OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
             value = data.terraform_remote_state.infrastructure.outputs.output_azure_blob_storage_container_name
           }
-          env {
-            name  = "OUTPUT_SERVICE_BUS_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_connectin_string
-          }
-          env {
-            name  = "OUTPUT_SERVICE_BUS_QUEUE_NAME"
-            value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_queue_name
-          }
+          # env {
+          #   name  = "OUTPUT_SERVICE_BUS_CONNECTION_STRING"
+          #   value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_connectin_string
+          # }
+          # env {
+          #   name  = "OUTPUT_SERVICE_BUS_QUEUE_NAME"
+          #   value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_queue_name
+          # }
         }
       }
     }

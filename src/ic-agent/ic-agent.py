@@ -46,7 +46,7 @@ if not output_azure_storage_container_name:
 input_blob_service_client = BlobServiceClient.from_connection_string(input_azure_storage_connection_string)
 output_blob_service_client = BlobServiceClient.from_connection_string(output_azure_storage_connection_string)
 input_service_bus_client = ServiceBusClient.from_connection_string(input_service_bus_connection_string)
-output_service_bus_client = ServiceBusClient.from_connection_string(output_service_bus_connection_string)
+# output_service_bus_client = ServiceBusClient.from_connection_string(output_service_bus_connection_string)
 
 def compress_image(image_data):
     print(f"✅ Starting Process (Image Compression)")
