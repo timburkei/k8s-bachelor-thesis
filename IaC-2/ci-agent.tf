@@ -17,7 +17,6 @@ resource "kubernetes_deployment" "ci_agent" {
 
       spec {
 
-
         toleration {
           key      = "virtual-kubelet.io/provider"
           operator = "Equal"
@@ -25,36 +24,65 @@ resource "kubernetes_deployment" "ci_agent" {
           effect   = "NoSchedule"
         }
 
+
         affinity {
           node_affinity {
+            required_during_scheduling_ignored_during_execution {
+              node_selector_term {
+                match_expressions {
+                  key      = "node-type"
+                  operator = "In"
+                  values   = ["aks-vm"]
+                }
+              }
+              node_selector_term {
+                match_expressions {
+                  key      = "kubernetes.io/hostname"
+                  operator = "In"
+                  values   = ["virtual-node-aci-linux"]
+                }
+              }
+            }
             preferred_during_scheduling_ignored_during_execution {
-              weight = 1
+              weight = 100
               preference {
                 match_expressions {
-                  key      = "kubernetes.io/role"
-                  operator = "NotIn"
-                  values   = ["virtual-kubelet"]
+                  key      = "node-type"
+                  operator = "In"
+                  values   = ["aks-vm"]
                 }
               }
             }
           }
         }
+
+
         container {
           image = "ghcr.io/timburkei/ci-agent:latest"
           name  = "ci-agent"
 
+          resources {
+            requests = {
+              cpu    = "500m"
+              memory = "256Mi"
+            }
+            limits = {
+              cpu    = "500m"
+              memory = "256Mi"
+            }
+          }
+
           env {
-            name  = "INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_connection_string
+            name  = "AZURE_BLOB_STORAGE_CONNECTION_STRING"
+            value = data.terraform_remote_state.infrastructure.outputs.azure_blob_storage_connection_string
           }
           env {
             name = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
-            # Beachte: Falls der Outputname ein Sonderzeichen (z. B. "-") enthält, greifst du so darauf zu:
-            value = data.terraform_remote_state.infrastructure.outputs["input_azure_blob-storage_container_name"]
+            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_container_name
           }
           env {
             name  = "INPUT_SERVICE_BUS_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connectin_string
+            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connection_string
           }
           env {
             name  = "INPUT_SERVICE_BUS_QUEUE_NAME"
@@ -109,7 +137,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "ci_agent_hpa" {
   spec {
     max_replicas                      = 10
     min_replicas                      = 1
-    target_cpu_utilization_percentage = 50
+    target_cpu_utilization_percentage = 5
 
     scale_target_ref {
       api_version = "apps/v1"

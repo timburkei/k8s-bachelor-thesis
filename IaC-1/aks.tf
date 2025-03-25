@@ -7,12 +7,17 @@ resource "azurerm_kubernetes_cluster" "aks_cluster_thesis_hdm_25" {
   default_node_pool {
     name = "default"
     # node_count = 1
-    vm_size        = "Standard_DS2_v2"
+    #vm_size        = "Standard_DS2_v2"
+    vm_size = "Standard_B4ls_v2"
     vnet_subnet_id = azurerm_subnet.aks_subnet.id
 
     auto_scaling_enabled = true
     min_count            = 1
     max_count            = 2
+
+    node_labels = {
+      "node-type" = "aks-vm"
+    }
   }
 
   aci_connector_linux {

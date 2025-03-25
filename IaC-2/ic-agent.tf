@@ -26,12 +26,12 @@ resource "kubernetes_deployment" "ic_agent" {
         affinity {
           node_affinity {
             preferred_during_scheduling_ignored_during_execution {
-              weight = 1
+              weight = 100
               preference {
                 match_expressions {
-                  key      = "kubernetes.io/role"
-                  operator = "NotIn"
-                  values   = ["virtual-kubelet"]
+                  key      = "node-type"
+                  operator = "In"
+                  values   = ["aks-vm"]
                 }
               }
             }
@@ -40,21 +40,22 @@ resource "kubernetes_deployment" "ic_agent" {
 
 
 
+
         container {
           image = "ghcr.io/timburkei/ic-agent:latest"
           name  = "ic-agent"
 
           env {
-            name  = "INPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_connection_string
+            name  = "AZURE_BLOB_STORAGE_CONNECTION_STRING"
+            value = data.terraform_remote_state.infrastructure.outputs.azure_blob_storage_connection_string
           }
           env {
             name  = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
-            value = data.terraform_remote_state.infrastructure.outputs["input_azure_blob-storage_container_name"]
+            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob-storage_container_name
           }
           env {
             name  = "INPUT_SERVICE_BUS_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connectin_string
+            value = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connection_string
           }
           env {
             name  = "INPUT_SERVICE_BUS_QUEUE_NAME"
@@ -62,28 +63,16 @@ resource "kubernetes_deployment" "ic_agent" {
           }
           env {
             name  = "COMPRESSION_PERCENTAGE"
-            value = "50"
+            value = "30"
           }
           env {
             name  = "MAX_MESSAGE_COUNT"
             value = "3"
           }
           env {
-            name  = "OUTPUT_AZURE_BLOB_STORAGE_CONNECTION_STRING"
-            value = data.terraform_remote_state.infrastructure.outputs.output_azure_blob_storage_connection_string
-          }
-          env {
             name  = "OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
             value = data.terraform_remote_state.infrastructure.outputs.output_azure_blob_storage_container_name
           }
-          # env {
-          #   name  = "OUTPUT_SERVICE_BUS_CONNECTION_STRING"
-          #   value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_connectin_string
-          # }
-          # env {
-          #   name  = "OUTPUT_SERVICE_BUS_QUEUE_NAME"
-          #   value = data.terraform_remote_state.infrastructure.outputs.output_service_bus_queue_name
-          # }
         }
       }
     }
@@ -102,6 +91,7 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
       scaleTargetRef = {
         name = kubernetes_deployment.ic_agent.metadata[0].name
       }
+      pollingInterval = 15
       minReplicaCount = 1
       maxReplicaCount = 10
       triggers = [
@@ -109,7 +99,7 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
           type = "azure-servicebus"
           metadata = {
             queueName    = data.terraform_remote_state.infrastructure.outputs.input_service_bus_queue_name
-            messageCount = "15"
+            messageCount = "5"
           }
           authenticationRef = {
             name = "azure-servicebus-auth"
@@ -118,7 +108,7 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
       ]
     }
   }
-  depends_on = [null_resource.wait_for_keda_crds, kubernetes_secret.servicebus_connection_secret]
+  depends_on = [null_resource.wait_for_keda_crds]
 }
 
 resource "kubernetes_manifest" "azure_servicebus_auth" {
@@ -139,7 +129,7 @@ resource "kubernetes_manifest" "azure_servicebus_auth" {
       ]
     }
   }
-  depends_on = [null_resource.wait_for_keda_crds, kubernetes_secret.servicebus_connection_secret]
+  depends_on = [null_resource.wait_for_keda_crds]
 }
 
 resource "kubernetes_secret" "servicebus_connection_secret" {
@@ -148,6 +138,6 @@ resource "kubernetes_secret" "servicebus_connection_secret" {
     namespace = "default"
   }
   data = {
-    "connection-string" = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connectin_string
+    "connection-string" = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connection_string
   }
 }
