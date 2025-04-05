@@ -1,6 +1,9 @@
 terraform {
   required_providers {
-
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.21.1"
+    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "2.36.0"
@@ -15,11 +18,15 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 3.2.0"
+      version = "~> 3.2.3"
     }
   }
 }
 
+provider "azurerm" {
+  features {}
+  subscription_id = var.azure_subscrition_id
+}
 
 
 provider "kubernetes" {

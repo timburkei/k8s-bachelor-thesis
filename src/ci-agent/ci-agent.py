@@ -34,10 +34,6 @@ blob_service_client = BlobServiceClient.from_connection_string(azure_storage_con
 service_bus_client = ServiceBusClient.from_connection_string(input_service_bus_connection_string)
 
 
-class ImageUploadRequest(BaseModel):
-    image: str
-    load_testing_id: str
-
 async def get_blob_container_client():
     container_client = blob_service_client.get_container_client(input_azure_storage_container_name)
     if not container_client.exists():
@@ -48,6 +44,10 @@ async def get_blob_container_client():
 async def get_service_bus_sender():
     sender = service_bus_client.get_queue_sender(input_service_bus_queue_name )
     return sender
+
+class ImageUploadRequest(BaseModel):
+    image: str
+    load_testing_id: str
 
 
 @app.post("/upload")
@@ -95,6 +95,3 @@ async def  upload_image(request: ImageUploadRequest, container_client=Depends(ge
         logging.error(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}

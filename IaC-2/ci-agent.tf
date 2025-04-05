@@ -1,7 +1,14 @@
+resource "kubernetes_namespace" "ci_agent_namespace" {
+  metadata {
+    name = "ci-agent-namespace"
+  }
+}
+
 resource "kubernetes_deployment" "ci_agent" {
   metadata {
-    name   = "ci-agent"
-    labels = { app = "ci-agent" }
+    name      = "ci-agent"
+    namespace = kubernetes_namespace.ci_agent_namespace.metadata[0].name
+    labels    = { app = "ci-agent" }
   }
 
   spec {
@@ -24,25 +31,20 @@ resource "kubernetes_deployment" "ci_agent" {
           effect   = "NoSchedule"
         }
 
+        # toleration {
+        #   key      = "node.kubernetes.io/unreachable"
+        #   operator = "Exists"
+        #   effect   = "NoSchedule"
+        # }
+
+        # toleration {
+        #   key      = "node.kubernetes.io/unreachable"
+        #   operator = "Exists"
+        #   effect   = "NoExecute"
+        # }
 
         affinity {
           node_affinity {
-            required_during_scheduling_ignored_during_execution {
-              node_selector_term {
-                match_expressions {
-                  key      = "node-type"
-                  operator = "In"
-                  values   = ["aks-vm"]
-                }
-              }
-              node_selector_term {
-                match_expressions {
-                  key      = "kubernetes.io/hostname"
-                  operator = "In"
-                  values   = ["virtual-node-aci-linux"]
-                }
-              }
-            }
             preferred_during_scheduling_ignored_during_execution {
               weight = 100
               preference {
@@ -54,7 +56,81 @@ resource "kubernetes_deployment" "ci_agent" {
               }
             }
           }
+          pod_anti_affinity {
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 5
+              pod_affinity_term {
+                topology_key = "kubernetes.io/hostname"
+                label_selector {
+                  match_expressions {
+                    key      = "app"
+                    operator = "In"
+                    values   = ["ci-agent"]
+                  }
+                }
+              }
+            }
+          }
         }
+
+
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 10
+        #       preference {
+        #         match_expressions {
+        #           key      = "kubernetes.io/hostname"
+        #           operator = "In"
+        #           values   = ["virtual-node-aci-linux"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
+
+
+
+        # affinity {
+        #   node_affinity {
+        #     required_during_scheduling_ignored_during_execution {
+        #       node_selector_term {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #       node_selector_term {
+        #         match_expressions {
+        #           key      = "kubernetes.io/hostname"
+        #           operator = "In"
+        #           values   = ["virtual-node-aci-linux"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
 
 
         container {
@@ -63,12 +139,12 @@ resource "kubernetes_deployment" "ci_agent" {
 
           resources {
             requests = {
-              cpu    = "500m"
-              memory = "256Mi"
+              cpu    = "250m"
+              memory = "128Mi"
             }
             limits = {
-              cpu    = "500m"
-              memory = "256Mi"
+              cpu    = "250m"
+              memory = "128Mi"
             }
           }
 
@@ -77,7 +153,7 @@ resource "kubernetes_deployment" "ci_agent" {
             value = data.terraform_remote_state.infrastructure.outputs.azure_blob_storage_connection_string
           }
           env {
-            name = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
+            name  = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
             value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_container_name
           }
           env {
@@ -108,10 +184,8 @@ resource "kubernetes_deployment" "ci_agent" {
 
 resource "kubernetes_service" "ci_agent_service" {
   metadata {
-    name = "ci-agent-service"
-    annotations = {
-      "service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path" = "/health"
-    }
+    name      = "ci-agent-service"
+    namespace = kubernetes_namespace.ci_agent_namespace.metadata[0].name
   }
 
   spec {
@@ -131,7 +205,8 @@ resource "kubernetes_service" "ci_agent_service" {
 
 resource "kubernetes_horizontal_pod_autoscaler" "ci_agent_hpa" {
   metadata {
-    name = "ci-agent-hpa"
+    name      = "ci-agent-hpa"
+    namespace = kubernetes_namespace.ci_agent_namespace.metadata[0].name
   }
 
   spec {

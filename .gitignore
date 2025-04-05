@@ -25,6 +25,24 @@ IaC-2/terraform.tfstate.backup
 IaC-2/.terraform
 .terraform/
 *.tfstate
+*.backup
 *.tfstate.backup
 test.jtl
 jmeter.log
+Thread Group - 100.jmx
+testplan_v1.jmx
+test_test.jmx
+test_test_v1.2.jmx
+Test_test_v1.1.jmx
+main_test_v1.jmx
+log.jtl
+load_test_6.jmx
+load_test_6_2.jmx
+load_test_6_1.jmx
+load_test_5.jmx
+load_test_5_1.jmx
+ci-agent.tf
+Dockerfile
+bericht
+IaC-0
+IaC-2/temp.json

@@ -1,7 +1,14 @@
+resource "kubernetes_namespace" "ic_agent_namespace" {
+  metadata {
+    name = "ic-agent-namespace"
+  }
+}
+
 resource "kubernetes_deployment" "ic_agent" {
   metadata {
-    name   = "ic-agent"
-    labels = { app = "ic-agent" }
+    name      = "ic-agent"
+    namespace = kubernetes_namespace.ic_agent_namespace.metadata[0].name
+    labels    = { app = "ic-agent" }
   }
 
   spec {
@@ -23,7 +30,19 @@ resource "kubernetes_deployment" "ic_agent" {
           effect   = "NoSchedule"
         }
 
-        affinity {
+        toleration {
+          key      = "node.kubernetes.io/unreachable"
+          operator = "Exists"
+          effect   = "NoSchedule"
+        }
+
+        toleration {
+          key      = "node.kubernetes.io/unreachable"
+          operator = "Exists"
+          effect   = "NoExecute"
+        }
+
+  affinity {
           node_affinity {
             preferred_during_scheduling_ignored_during_execution {
               weight = 100
@@ -36,7 +55,147 @@ resource "kubernetes_deployment" "ic_agent" {
               }
             }
           }
+          pod_anti_affinity {
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 1
+              pod_affinity_term {
+                topology_key = "kubernetes.io/hostname"
+                label_selector {
+                  match_expressions {
+                    key      = "app"
+                    operator = "In"
+                    values   = ["ic-agent"] // Bei ci-agent.tf hier "ci-agent" eintragen
+                  }
+                }
+              }
+            }
+          }
         }
+
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 10
+        #       preference {
+        #         match_expressions {
+        #           key      = "type"
+        #           operator = "In"
+        #           values   = ["virtual-kubelet"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
+
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       # Hohe Gewichtung für AKS-VMs (stark bevorzugt)
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       # Niedrigere Gewichtung für ACI (Fallback-Option)
+        #       weight = 10
+        #       preference {
+        #         match_expressions {
+        #           key      = "type"
+        #           operator = "In"
+        #           values   = ["virtual-kubelet"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
+
+
+
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
+
+        # affinity {
+        #   node_affinity {
+        #     required_during_scheduling_ignored_during_execution {
+        #       node_selector_term {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #       node_selector_term {
+        #         match_expressions {
+        #           key      = "kubernetes.io/hostname"
+        #           operator = "In"
+        #           values   = ["virtual-node-aci-linux"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
+
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 50
+        #       preference {
+        #         match_expressions {
+        #           key      = "type"
+        #           operator = "In"
+        #           values   = ["virtual-kubelet"]
+        #         }
+        #       }
+        #     }
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       weight = 100
+        #       preference {
+        #         match_expressions {
+        #           key      = "node-type"
+        #           operator = "In"
+        #           values   = ["aks-vm"]
+        #         }
+        #       }
+        #     }
+        #   }
+        # }
 
 
 
@@ -45,13 +204,24 @@ resource "kubernetes_deployment" "ic_agent" {
           image = "ghcr.io/timburkei/ic-agent:latest"
           name  = "ic-agent"
 
+          resources {
+            requests = {
+              cpu    = "250m"
+              memory = "128Mi"
+            }
+            limits = {
+              cpu    = "250m"
+              memory = "128Mi"
+            }
+          }
+
           env {
             name  = "AZURE_BLOB_STORAGE_CONNECTION_STRING"
             value = data.terraform_remote_state.infrastructure.outputs.azure_blob_storage_connection_string
           }
           env {
             name  = "INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
-            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob-storage_container_name
+            value = data.terraform_remote_state.infrastructure.outputs.input_azure_blob_storage_container_name
           }
           env {
             name  = "INPUT_SERVICE_BUS_CONNECTION_STRING"
@@ -67,7 +237,7 @@ resource "kubernetes_deployment" "ic_agent" {
           }
           env {
             name  = "MAX_MESSAGE_COUNT"
-            value = "3"
+            value = "1"
           }
           env {
             name  = "OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME"
@@ -80,12 +250,13 @@ resource "kubernetes_deployment" "ic_agent" {
 }
 
 resource "kubernetes_manifest" "ic_agent_scaledobject" {
+  depends_on = [helm_release.keda]
   manifest = {
     apiVersion = "keda.sh/v1alpha1"
     kind       = "ScaledObject"
     metadata = {
       name      = "ic-agent-scaler"
-      namespace = "default"
+      namespace = kubernetes_namespace.ic_agent_namespace.metadata[0].name
     }
     spec = {
       scaleTargetRef = {
@@ -108,7 +279,7 @@ resource "kubernetes_manifest" "ic_agent_scaledobject" {
       ]
     }
   }
-  depends_on = [null_resource.wait_for_keda_crds]
+  #depends_on = [null_resource.wait_for_keda_crds]
 }
 
 resource "kubernetes_manifest" "azure_servicebus_auth" {
@@ -117,7 +288,7 @@ resource "kubernetes_manifest" "azure_servicebus_auth" {
     kind       = "TriggerAuthentication"
     metadata = {
       name      = "azure-servicebus-auth"
-      namespace = "default"
+      namespace = kubernetes_namespace.ic_agent_namespace.metadata[0].name
     }
     spec = {
       secretTargetRef = [
@@ -129,13 +300,13 @@ resource "kubernetes_manifest" "azure_servicebus_auth" {
       ]
     }
   }
-  depends_on = [null_resource.wait_for_keda_crds]
+  #depends_on = [null_resource.wait_for_keda_crds]
 }
 
 resource "kubernetes_secret" "servicebus_connection_secret" {
   metadata {
     name      = "servicebus-connection-secret"
-    namespace = "default"
+    namespace = kubernetes_namespace.ic_agent_namespace.metadata[0].name
   }
   data = {
     "connection-string" = data.terraform_remote_state.infrastructure.outputs.input_service_bus_connection_string

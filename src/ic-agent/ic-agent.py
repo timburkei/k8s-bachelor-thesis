@@ -6,7 +6,6 @@ from PIL import Image
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
-# Input configuration
 azure_storage_connection_string = os.getenv("AZURE_BLOB_STORAGE_CONNECTION_STRING")
 input_azure_storage_container_name = os.getenv("INPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME")
 input_service_bus_connection_string = os.getenv("INPUT_SERVICE_BUS_CONNECTION_STRING")
@@ -30,7 +29,6 @@ if not max_message_count:
 if not output_azure_storage_container_name:
     raise ValueError("OUTPUT_AZURE_BLOB_STORAGE_CONTAINER_NAME is required")
 
-# Initialize clients
 blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
 input_service_bus_client = ServiceBusClient.from_connection_string(input_service_bus_connection_string)
 
@@ -46,30 +44,22 @@ def compress_image(image_data):
         return output_stream.getvalue()
     print(f"⛔ End of the process (Image Compression)")
 
-# Save compressed image
 def save_compressed_image(image_data, image_name):
-    print(f"✅ Starting Step 6 (Save compressed Image) - Save {image_name} to output blob storage")
+    print(f"✅ Starting Process (Save compressed Image) - Save {image_name} to output blob storage")
 
     try:
-        output_container_client = blob_service_client.get_container_client(output_azure_storage_container_name)
-        if not output_container_client.exists():
-            output_container_client.create_container()
-            logging.info(f"Output container {output_azure_storage_container_name} created")
-
         output_blob_client = blob_service_client.get_blob_client(
-            container=output_azure_storage_container_name, 
+            container=output_azure_storage_container_name,
             blob=image_name
         )
         output_blob_client.upload_blob(image_data, overwrite=True)
 
-        # Generated URL
         image_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{output_azure_storage_container_name}/{image_name}"
-        logging.info(f"Bild erfolgreich gespeichert: {image_url}")
-        print(f"⛔ End of Step 6 (Save compressed Image) - Save {image_name} to output blob storage")
+        print(f"⛔ End of Process (Save compressed Image) - Save {image_name} to output blob storage")
         return image_url
 
     except Exception as e:
-        print(f"❗Step 6 (Save compressed Image) - Error when saving the image {e}")
+        print(f"❗ERROR - Step 6 (Save compressed Image) - Error when saving the image {e}")
         raise
 
 
@@ -80,7 +70,7 @@ def process_message():
     try:
         with input_service_bus_client.get_queue_receiver(
             queue_name=input_service_bus_queue_name,
-            max_wait_time=5
+            max_wait_time=15
         ) as receiver:
             messages = receiver.receive_messages(max_message_count=int(max_message_count))
 
@@ -165,8 +155,7 @@ def initialize_containers():
         raise
 
 def main():
-    """Hauptfunktion für den Agenten"""
-    logging.info("Image Compression Agent gestartet")
+    print("Image Compression Agent started")
     
     try:
         # Container initialisieren
