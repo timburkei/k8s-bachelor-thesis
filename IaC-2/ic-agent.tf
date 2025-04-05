@@ -57,14 +57,14 @@ resource "kubernetes_deployment" "ic_agent" {
           }
           pod_anti_affinity {
             preferred_during_scheduling_ignored_during_execution {
-              weight = 1
+              weight = 5
               pod_affinity_term {
                 topology_key = "kubernetes.io/hostname"
                 label_selector {
                   match_expressions {
                     key      = "app"
                     operator = "In"
-                    values   = ["ic-agent"] // Bei ci-agent.tf hier "ci-agent" eintragen
+                    values   = ["ic-agent"] 
                   }
                 }
               }

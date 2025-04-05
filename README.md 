@@ -2,7 +2,7 @@ Add your Azure Subscription ID in ./Iac-1/terraform.tfvars and ./Iac-2/terraform
 
 To start the project
 
-```sh
+```
 az login
 ```
 
