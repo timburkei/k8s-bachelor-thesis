@@ -35,3 +35,19 @@ output "kube_config" {
   }
   sensitive = true
 }
+
+output "resource_group_name" {
+  value = azurerm_resource_group.rg-thesis.name
+}
+
+output "cluster_name" {
+  value = azurerm_kubernetes_cluster.aks_cluster_thesis_hdm_25.name
+}
+
+output "location" {
+  value = azurerm_resource_group.rg-thesis.location
+}
+
+output "log_analytics_workspace_id" {
+  value = azurerm_log_analytics_workspace.log_workspace.id
+}

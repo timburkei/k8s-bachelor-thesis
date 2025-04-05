@@ -4,6 +4,14 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "4.21.1"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2.3"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.7.1"
+    }
   }
 }
 
@@ -32,4 +40,5 @@ provider "helm" {
 resource "azurerm_resource_group" "rg-thesis" {
   name     = "thesis-25-hdm-stuttgart"
   location = "westeurope"
+  # location = "Germany West Central"
 }

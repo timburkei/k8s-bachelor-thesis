@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "hdm-25-stg-storage-acc" {
-  name                     = "hdm25input"
+  name                     = "hdm25storageaccount"
   resource_group_name      = azurerm_resource_group.rg-thesis.name
   location                 = azurerm_resource_group.rg-thesis.location
   account_tier             = "Standard"
